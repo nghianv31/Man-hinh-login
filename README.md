@@ -1,4 +1,4 @@
-# bt1 - Flutter Application
+# bt1 - Màn hình login
 
 Ứng dụng Flutter quản lý đăng nhập sử dụng cơ sở dữ liệu Hive.
 
