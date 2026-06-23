@@ -5,29 +5,28 @@ part 'UserModel.g.dart';
 @HiveType(typeId: 0)
 class UserModel extends HiveObject {
   @HiveField(0)
-  final String msThue;
+  final String taxCode;
 
   @HiveField(1)
-  final String taiKhoan;
+  final String account;
 
   @HiveField(2)
-  final String matKhau;
+  final String password;
 
   @HiveField(3)
   final bool isLoginned;
 
   UserModel({
-    required this.msThue,
-    required this.taiKhoan,
-    required this.matKhau,
+    required this.taxCode,
+    required this.account,
+    required this.password,
     this.isLoginned = false,
   });
 
   Map<String, dynamic> toJson() => {
-        'msThue': msThue,
-        'taiKhoan': taiKhoan,
-        'matKhau': matKhau,
-        'isLoginned': isLoginned,
-      };
+    'taxCode': taxCode,
+    'account': account,
+    'password': password,
+    'isLoginned': isLoginned,
+  };
 }
-

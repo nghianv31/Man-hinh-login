@@ -10,9 +10,9 @@ class UserRepo {
   final Box<UserModel> _box = Hive.box<UserModel>('users');
 
   static final UserModel user1 = UserModel(
-    msThue: '1111111111',
-    taiKhoan: 'demo',
-    matKhau: '123456',
+    taxCode: '1111111111',
+    account: 'demo',
+    password: '123456',
   );
 
   Future<void> addUser(UserModel user) async {
@@ -24,8 +24,8 @@ class UserRepo {
   }
 
   bool compareUser(UserModel user) {
-    return user.msThue == user1.msThue &&
-        user.taiKhoan == user1.taiKhoan &&
-        user.matKhau == user1.matKhau;
+    return user.taxCode == user1.taxCode &&
+        user.account == user1.account &&
+        user.password == user1.password;
   }
 }

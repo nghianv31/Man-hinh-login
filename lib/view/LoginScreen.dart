@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hive/hive.dart';
 
+import '../core/values/AppStrings.dart';
 import '../models/UserModel.dart';
 import 'HomeScreen.dart';
 
@@ -25,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final Color focusedColor = Color(0xFFF24E1E);
   final double fontSize = 16;
 
-  final TextEditingController msThueController = TextEditingController();
+  final TextEditingController taxCodeController = TextEditingController();
   final TextEditingController tkController = TextEditingController();
   final TextEditingController mkController = TextEditingController();
 
@@ -40,15 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     final currentUser = _userRepo.getUser();
     if (currentUser != null) {
-      msThueController.text = currentUser.msThue;
-      tkController.text = currentUser.taiKhoan;
-      mkController.text = currentUser.matKhau;
+      taxCodeController.text = currentUser.taxCode;
+      tkController.text = currentUser.account;
+      mkController.text = currentUser.password;
     }
   }
 
   @override
   void dispose() {
-    msThueController.dispose();
+    taxCodeController.dispose();
     tkController.dispose();
     mkController.dispose();
     super.dispose();
@@ -73,9 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (formState != null && formState.validate()) {
       formState.save();
       final UserModel newUser = UserModel(
-        msThue: msThueController.text,
-        taiKhoan: tkController.text,
-        matKhau: mkController.text,
+        taxCode: taxCodeController.text,
+        account: tkController.text,
+        password: mkController.text,
         isLoginned: true,
       );
       final bool result = _userRepo.compareUser(newUser);
@@ -91,8 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Đăng nhập thất bại")));
-        msThueController.clear();
+        ).showSnackBar(const SnackBar(content: Text(AppStrings.loginFailed)));
+        taxCodeController.clear();
         tkController.clear();
         mkController.clear();
       }
@@ -103,16 +104,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final Size size = constraints.biggest;
+            final Size size = MediaQuery.sizeOf(context);
             return SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -155,23 +160,23 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         children: [
           _buildItemForm(
-            label: "Mã số thuế",
-            hintText: "Mã số thuế",
-            controller: msThueController,
+            label: AppStrings.taxCode,
+            hintText: AppStrings.taxCode,
+            controller: taxCodeController,
             isPassword: false,
             isNumberKeyBoard: true,
             icon: Icons.cancel,
             validator: (value) {
               if (value == null || value.length < 10) {
-                return "Mã số thuế phải có ít nhất 10 ký tự";
+                return AppStrings.taxCodeInvalid;
               }
               return null;
             },
           ),
           const SizedBox(height: 10),
           _buildItemForm(
-            label: "Tài khoản",
-            hintText: "Tài khoản",
+            label: AppStrings.account,
+            hintText: AppStrings.account,
             controller: tkController,
             isPassword: false,
             isNumberKeyBoard: false,
@@ -182,15 +187,15 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 10),
           _buildItemForm(
-            label: "Mật khẩu",
-            hintText: "Mật khẩu",
+            label: AppStrings.password,
+            hintText: AppStrings.password,
             controller: mkController,
             isPassword: true,
             isNumberKeyBoard: false,
             icon: isShowPass ? Icons.visibility : Icons.visibility_off,
             validator: (value) {
               if (value == null || value.length < 6 || value.length > 50) {
-                return "Mật khẩu phải từ 8 đến 50 ký tự";
+                return AppStrings.passwordInvalid;
               }
               return null;
             },
@@ -227,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
           validator: (value) {
             final currentVal = controller.text;
             if (currentVal.isEmpty) {
-              return "Vui lòng nhập $label";
+              return "${AppStrings.pleaseEnter}$label";
             }
             return validator(currentVal);
           },
@@ -330,7 +335,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Center(
           child: Text(
-            "Đăng nhập",
+            AppStrings.login,
             style: TextStyle(
               color: Colors.white,
               fontSize: fontSize,
@@ -346,9 +351,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildFooterItem(size: size, icon: icHeadphone, title: "Trợ giúp"),
-        _buildFooterItem(size: size, icon: icSocial, title: "Group"),
-        _buildFooterItem(size: size, icon: isSearch, title: "Tra cứu"),
+        _buildFooterItem(size: size, icon: icHeadphone, title: AppStrings.help),
+        _buildFooterItem(size: size, icon: icSocial, title: AppStrings.group),
+        _buildFooterItem(size: size, icon: isSearch, title: AppStrings.lookup),
       ],
     );
   }
