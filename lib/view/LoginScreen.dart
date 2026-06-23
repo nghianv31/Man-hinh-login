@@ -27,8 +27,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final double fontSize = 16;
 
   final TextEditingController taxCodeController = TextEditingController();
-  final TextEditingController tkController = TextEditingController();
-  final TextEditingController mkController = TextEditingController();
+  final TextEditingController accountController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   final UserRepo _userRepo = UserRepo();
 
@@ -42,16 +42,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final currentUser = _userRepo.getUser();
     if (currentUser != null) {
       taxCodeController.text = currentUser.taxCode;
-      tkController.text = currentUser.account;
-      mkController.text = currentUser.password;
+      accountController.text = currentUser.account;
+      passwordController.text = currentUser.password;
     }
   }
 
   @override
   void dispose() {
     taxCodeController.dispose();
-    tkController.dispose();
-    mkController.dispose();
+    accountController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
@@ -75,8 +75,8 @@ class _LoginScreenState extends State<LoginScreen> {
       formState.save();
       final UserModel newUser = UserModel(
         taxCode: taxCodeController.text,
-        account: tkController.text,
-        password: mkController.text,
+        account: accountController.text,
+        password: passwordController.text,
         isLoginned: true,
       );
       final bool result = _userRepo.compareUser(newUser);
@@ -94,8 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text(AppStrings.loginFailed)));
         taxCodeController.clear();
-        tkController.clear();
-        mkController.clear();
+        accountController.clear();
+        passwordController.clear();
       }
     }
   }
@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _buildItemForm(
             label: AppStrings.account,
             hintText: AppStrings.account,
-            controller: tkController,
+            controller: accountController,
             isPassword: false,
             isNumberKeyBoard: false,
             icon: Icons.cancel,
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _buildItemForm(
             label: AppStrings.password,
             hintText: AppStrings.password,
-            controller: mkController,
+            controller: passwordController,
             isPassword: true,
             isNumberKeyBoard: false,
             icon: isShowPass ? Icons.visibility : Icons.visibility_off,
