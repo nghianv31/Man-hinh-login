@@ -1,6 +1,11 @@
-# bt1 - Flutter Application
+# bt1 - Màn hình login
 
 Ứng dụng Flutter quản lý đăng nhập sử dụng cơ sở dữ liệu Hive.
+
+## Demo
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/e54641bc-089e-4e3f-ba8a-7b056d35d428" width="400" controls></video>
+</p>
 
 ## 1. Workflow (Luồng Hoạt Động)
 
