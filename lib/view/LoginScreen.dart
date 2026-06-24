@@ -30,6 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController accountController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final FocusNode taxCodeFocus = FocusNode();
+  final FocusNode accountFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
+
   final UserRepo _userRepo = UserRepo();
 
   bool isShowPass = false;
@@ -172,6 +176,8 @@ class _LoginScreenState extends State<LoginScreen> {
               }
               return null;
             },
+            nextFocus: accountFocus,
+            currentFocus: taxCodeFocus,
           ),
           const SizedBox(height: 10),
           _buildItemForm(
@@ -184,6 +190,8 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (value) {
               return null;
             },
+            nextFocus: passwordFocus,
+            currentFocus: accountFocus,
           ),
           const SizedBox(height: 10),
           _buildItemForm(
@@ -199,6 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
               }
               return null;
             },
+            currentFocus: passwordFocus,
           ),
         ],
       ),
@@ -213,6 +222,8 @@ class _LoginScreenState extends State<LoginScreen> {
     required bool isNumberKeyBoard,
     required IconData icon,
     required String? Function(String?) validator,
+    FocusNode? nextFocus,
+    required FocusNode currentFocus,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,6 +252,13 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
+                  focusNode: currentFocus,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    nextFocus != null
+                        ? FocusScope.of(context).requestFocus(nextFocus)
+                        : _onClickLoginButton();
+                  },
                   keyboardType: isNumberKeyBoard
                       ? TextInputType.number
                       : TextInputType.text,

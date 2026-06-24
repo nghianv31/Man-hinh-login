@@ -1,3 +1,4 @@
+import 'package:bt1/firebase_options.dart';
 import 'package:bt1/repo/UserRepo.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -5,12 +6,17 @@ import 'models/UserModel.dart';
 import 'view/HomeScreen.dart';
 import 'view/LoginScreen.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final appDocumentDir = await getApplicationDocumentsDirectory();
+  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
   Hive.init(appDocumentDir.path);
   Hive.registerAdapter(UserModelAdapter());
+  
   await Hive.openBox<UserModel>('users');
   await Hive.openBox('settings');
   runApp(const MyApp());
@@ -35,7 +41,6 @@ class _MyAppState extends State<MyApp> {
     if (!isFirstRun) {
       currentUser = _userRepo.getUser();
     }
-    print(isFirstRun);
   }
 
   @override
