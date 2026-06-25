@@ -44,6 +44,7 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   bcrypt: ^1.2.0
   get: ^4.7.3
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

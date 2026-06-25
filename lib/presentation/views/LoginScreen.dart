@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
@@ -13,23 +14,23 @@ class LoginScreen extends GetView<LoginController> {
   final String isSearch = 'assets/images/search-normal.svg';
   final String icSocial = 'assets/images/Social link.svg';
 
-  final Color textColor = const Color(0xFF242E37);
-  final Color textHintColor = const Color(0xFF5C6771);
-  final Color borderColor = const Color(0xFFEBECED);
-  final Color focusedColor = const Color(0xFFF24E1E);
   final double fontSize = 16;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.theme.colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final Size size = MediaQuery.sizeOf(context);
-            return SingleChildScrollView(
-              child: ConstrainedBox(
+      backgroundColor: colorScheme.surface,
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final Size size = MediaQuery.sizeOf(context);
+              return ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
@@ -47,18 +48,18 @@ class LoginScreen extends GetView<LoginController> {
                           builder: (ctrl) => _buildForm(size, ctrl, context),
                         ),
                         const SizedBox(height: 40),
-                        _buildButton(size, controller),
-                        const SizedBox(height: 40),
+                        _buildButton(size, controller, context),
+                        const SizedBox(height: 80),
                         const Spacer(),
-                        _buildFooter(size),
+                        _buildFooter(size, context),
                         const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -160,13 +161,14 @@ class LoginScreen extends GetView<LoginController> {
     required LoginController controller,
     required BuildContext context,
   }) {
+    final colorScheme = context.theme.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: textColor,
+            color: colorScheme.onSurface,
             fontSize: fontSize,
             fontWeight: FontWeight.w700,
           ),
@@ -201,23 +203,25 @@ class LoginScreen extends GetView<LoginController> {
                   obscureText: isPassword
                       ? !controller.isShowPass.value
                       : false,
-                  cursorColor: focusedColor,
+                  cursorColor: colorScheme.primary,
                   showCursor: true,
                   decoration: InputDecoration(
                     hintText: hintText,
                     hintStyle: TextStyle(
-                      color: textHintColor,
+                      color: colorScheme.onSurfaceVariant,
                       fontSize: fontSize,
                       fontWeight: FontWeight.w600,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: borderColor),
+                      borderSide: BorderSide(color: colorScheme.outline),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: state.hasError ? Colors.red : focusedColor,
+                        color: state.hasError
+                            ? Colors.red
+                            : colorScheme.primary,
                         width: 2,
                       ),
                     ),
@@ -236,13 +240,15 @@ class LoginScreen extends GetView<LoginController> {
                             child: Icon(
                               icon,
                               size: 24,
-                              color: textHintColor.withOpacity(0.5),
+                              color: colorScheme.onSurfaceVariant.withOpacity(
+                                0.5,
+                              ),
                             ),
                           )
                         : null,
                   ),
                   style: TextStyle(
-                    color: textColor,
+                    color: colorScheme.onSurface,
                     fontSize: fontSize,
                     fontWeight: FontWeight.w600,
                   ),
@@ -253,26 +259,38 @@ class LoginScreen extends GetView<LoginController> {
                     }
                     controller.update();
                   },
-                ),
-                Visibility(
-                  visible: state.hasError,
-                  child: Column(
+                ).animate(
+                  controller: controller.shakeController,
+                  autoPlay: false,
+                ).shake(hz: 4, curve: Curves.easeInOutCubic, duration: const Duration(milliseconds: 400)),
+                if (state.hasError)
+                  Column(
                     children: [
                       const SizedBox(height: 6),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: Text(
-                          state.errorText ?? "",
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: colorScheme.error,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              state.errorText ?? "",
+                              style: TextStyle(
+                                color: colorScheme.error,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ).animate().fade().scale(curve: Curves.elasticOut),
                     ],
                   ),
-                ),
               ],
             );
           },
@@ -281,14 +299,22 @@ class LoginScreen extends GetView<LoginController> {
     );
   }
 
-  Widget _buildButton(Size size, LoginController controller) {
+  Widget _buildButton(
+    Size size,
+    LoginController controller,
+    BuildContext context,
+  ) {
+    final colorScheme = context.theme.colorScheme;
     return GestureDetector(
-      onTap: () => controller.handleLogin(),
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        controller.handleLogin();
+      },
       child: Container(
         width: size.width,
         height: size.height * 0.06,
         decoration: BoxDecoration(
-          color: focusedColor,
+          color: colorScheme.primary,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Obx(
@@ -316,13 +342,28 @@ class LoginScreen extends GetView<LoginController> {
     );
   }
 
-  Widget _buildFooter(Size size) {
+  Widget _buildFooter(Size size, BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildFooterItem(size: size, icon: icHeadphone, title: AppStrings.help),
-        _buildFooterItem(size: size, icon: icSocial, title: AppStrings.group),
-        _buildFooterItem(size: size, icon: isSearch, title: AppStrings.lookup),
+        _buildFooterItem(
+          size: size,
+          icon: icHeadphone,
+          title: AppStrings.help,
+          context: context,
+        ),
+        _buildFooterItem(
+          size: size,
+          icon: icSocial,
+          title: AppStrings.group,
+          context: context,
+        ),
+        _buildFooterItem(
+          size: size,
+          icon: isSearch,
+          title: AppStrings.lookup,
+          context: context,
+        ),
       ],
     );
   }
@@ -331,13 +372,15 @@ class LoginScreen extends GetView<LoginController> {
     required Size size,
     required String icon,
     required String title,
+    required BuildContext context,
   }) {
+    final colorScheme = context.theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 6.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: borderColor, width: 1),
+        border: Border.all(color: colorScheme.outline, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.2),
@@ -359,7 +402,7 @@ class LoginScreen extends GetView<LoginController> {
             title,
             style: TextStyle(
               fontSize: fontSize,
-              color: textColor,
+              color: colorScheme.onSurface,
               fontWeight: FontWeight.w500,
             ),
           ),

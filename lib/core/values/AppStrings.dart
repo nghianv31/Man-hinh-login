@@ -1,6 +1,6 @@
 class AppStrings {
   // Login Screen
-  static const String loginFailed = "Đăng nhập thất bại";
+  static const String loginFailed = "Tài khoản hoặc mật khẩu không chính xác";
   static const String taxCode = "Mã số thuế";
   static const String taxCodeInvalid = "Mã số thuế phải có ít nhất 10 ký tự";
   static const String account = "Tài khoản";
@@ -27,5 +27,6 @@ class AppStrings {
   static const String ok = "OK";
   static const String accountNotExist = "Thông tin đăng nhập không hợp lệ";
   static const String errorServer = "Lỗi máy chủ";
-  static const String lockLogin = "Tài khoản của bạn đã bị tạm khoá trong 5 phút do nhập sai nhiều lần.";
+  static const String lockLogin =
+      "Tài khoản của bạn đã bị tạm khoá trong 5 phút do nhập sai nhiều lần.";
 }

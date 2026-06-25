@@ -8,8 +8,10 @@ import 'package:get/get.dart';
 import '../../core/values/AppStrings.dart';
 import '../../core/exceptions/auth_exception.dart';
 import '../views/widgets/lock_dialog_widget.dart';
+import '../views/widgets/error_dialog_widget.dart';
 
-class LoginController extends GetxController {
+class LoginController extends GetxController
+    with GetSingleTickerProviderStateMixin {
   final BaseUserRepo baseUserRepo;
   final BaseAuthRepo baseAuthRepo;
   LoginController(this.baseUserRepo, this.baseAuthRepo);
@@ -23,6 +25,8 @@ class LoginController extends GetxController {
   final RxInt countdownSeconds = 0.obs;
   Timer? _lockTimer;
 
+  late AnimationController shakeController;
+
   final TextEditingController taxCodeController = TextEditingController();
   final TextEditingController accountController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -34,13 +38,20 @@ class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
+  void onInit() {
+    super.onInit();
+    shakeController = AnimationController(vsync: this);
+  }
+
+  @override
   void onReady() {
     super.onReady();
     _checkLockState();
   }
 
   void _checkLockState() {
-    int remaining = (SettingBox.lockUntil - DateTime.now().millisecondsSinceEpoch) ~/ 1000;
+    int remaining =
+        (SettingBox.lockUntil - DateTime.now().millisecondsSinceEpoch) ~/ 1000;
     if (remaining > 0) {
       countdownSeconds.value = remaining;
       isLockLogin.value = true;
@@ -71,7 +82,8 @@ class LoginController extends GetxController {
     if (SettingBox.lockedUserId.isNotEmpty) {
       try {
         await baseUserRepo.updateTimeLockLogin("0", SettingBox.lockedUserId);
-        SettingBox.lockedUserId = ""; // Xóa bộ nhớ local sau khi unlock thành công
+        SettingBox.lockedUserId =
+            ""; // Xóa bộ nhớ local sau khi unlock thành công
       } catch (e) {
         debugPrint("Lỗi unlock remote: $e");
       }
@@ -96,6 +108,8 @@ class LoginController extends GetxController {
     taxCodeFocus.dispose();
     accountFocus.dispose();
     passwordFocus.dispose();
+    shakeController.dispose();
+    super.onClose();
     super.onClose();
   }
 
@@ -150,13 +164,7 @@ class LoginController extends GetxController {
               displayMessage = AppStrings.errorServer;
           }
           message.value = displayMessage;
-          Get.defaultDialog(
-            title: AppStrings.loginError,
-            middleText: message.value,
-            textConfirm: AppStrings.close,
-            confirmTextColor: Colors.white,
-            onConfirm: () => Get.back(),
-          );
+          Get.dialog(ErrorDialogWidget(message: message.value));
         }
         taxCodeController.clear();
         accountController.clear();
@@ -164,18 +172,14 @@ class LoginController extends GetxController {
         update();
       } catch (e) {
         message.value = AppStrings.errorServer;
-        Get.defaultDialog(
-          title: AppStrings.loginError,
-          middleText: message.value,
-          textConfirm: AppStrings.close,
-          confirmTextColor: Colors.white,
-          onConfirm: () => Get.back(),
-        );
+        Get.dialog(ErrorDialogWidget(message: message.value));
         update();
       } finally {
         isLoading.value = false;
         message.value = '';
       }
+    } else {
+      shakeController.forward(from: 0.0);
     }
   }
 }
