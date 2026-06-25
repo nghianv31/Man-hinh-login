@@ -25,5 +25,7 @@ class AppStrings {
   static const String close = "Đóng";
   static const String cancel = "Hủy";
   static const String ok = "OK";
-  static const String accountNotExist = "Tài khoản không tồn tại";
+  static const String accountNotExist = "Thông tin đăng nhập không hợp lệ";
+  static const String errorServer = "Lỗi máy chủ";
+  static const String lockLogin = "Tài khoản của bạn đã bị tạm khoá trong 5 phút do nhập sai nhiều lần.";
 }

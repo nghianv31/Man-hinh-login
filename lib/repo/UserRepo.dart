@@ -7,6 +7,7 @@ import '../../core/values/AppStrings.dart';
 
 abstract class BaseUserRepo {
   Future<UserModel> getCurrentUser();
+  Future<void> updateTimeLockLogin(String lockUntil, String userId);
 }
 
 class UserRepo implements BaseUserRepo {
@@ -43,7 +44,7 @@ class UserRepo implements BaseUserRepo {
       }
       return listUser;
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(AppStrings.errorServer);
     }
   }
 
@@ -51,7 +52,20 @@ class UserRepo implements BaseUserRepo {
     try {
       return _userBox.getUsers();
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(AppStrings.errorServer);
+    }
+  }
+  
+  @override
+  Future<void> updateTimeLockLogin(String lockUntil,String userId)async {
+    try {
+      await _firebaseRemote.updateDocument(
+        collection: 'accounts',
+        docId: userId,
+        data: {'lockUntil': lockUntil},
+      );
+    } catch (e) {
+      throw Exception(AppStrings.errorServer);
     }
   }
 }

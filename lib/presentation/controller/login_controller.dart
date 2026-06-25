@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:bt1/core/routes/app_routes.dart';
+import 'package:bt1/data/local/setting_box.dart';
 import 'package:bt1/repo/AuthRepo.dart';
 import 'package:bt1/repo/UserRepo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/values/AppStrings.dart';
+import '../../core/exceptions/auth_exception.dart';
+import '../views/widgets/lock_dialog_widget.dart';
 
 class LoginController extends GetxController {
   final BaseUserRepo baseUserRepo;
@@ -13,6 +17,11 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString message = ''.obs;
   final RxBool isShowPass = false.obs;
+
+  //lock state
+  final RxBool isLockLogin = false.obs;
+  final RxInt countdownSeconds = 0.obs;
+  Timer? _lockTimer;
 
   final TextEditingController taxCodeController = TextEditingController();
   final TextEditingController accountController = TextEditingController();
@@ -24,9 +33,63 @@ class LoginController extends GetxController {
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
+  @override
+  void onReady() {
+    super.onReady();
+    _checkLockState();
+  }
+
+  void _checkLockState() {
+    int remaining = (SettingBox.lockUntil - DateTime.now().millisecondsSinceEpoch) ~/ 1000;
+    if (remaining > 0) {
+      countdownSeconds.value = remaining;
+      isLockLogin.value = true;
+      _startTimer();
+      showLockDialog();
+    } else {
+      _unlock();
+    }
+  }
+
+  void _startTimer() {
+    _lockTimer?.cancel();
+    _lockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (countdownSeconds.value > 0) {
+        countdownSeconds.value--;
+      } else {
+        timer.cancel();
+        _unlock();
+      }
+    });
+  }
+
+  void _unlock() async {
+    SettingBox.countErrorLogin = 0;
+    SettingBox.lockUntil = 0;
+    isLockLogin.value = false;
+
+    if (SettingBox.lockedUserId.isNotEmpty) {
+      try {
+        await baseUserRepo.updateTimeLockLogin("0", SettingBox.lockedUserId);
+        SettingBox.lockedUserId = ""; // Xóa bộ nhớ local sau khi unlock thành công
+      } catch (e) {
+        debugPrint("Lỗi unlock remote: $e");
+      }
+    }
+
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
+    }
+  }
+
+  void showLockDialog() {
+    if (Get.isDialogOpen ?? false) return;
+    Get.dialog(const LockDialogWidget(), barrierDismissible: false);
+  }
 
   @override
   void onClose() {
+    _lockTimer?.cancel();
     taxCodeController.dispose();
     accountController.dispose();
     passwordController.dispose();
@@ -54,6 +117,11 @@ class LoginController extends GetxController {
   }
 
   void handleLogin() async {
+    if (isLockLogin.value) {
+      showLockDialog();
+      return;
+    }
+
     final formState = formKey.currentState;
     if (formState != null && formState.validate()) {
       isLoading.value = true;
@@ -64,9 +132,38 @@ class LoginController extends GetxController {
           accountController.text,
           passwordController.text,
         );
+        SettingBox.countErrorLogin = 0; // Reset on success
         Get.offAllNamed(AppRoutes.home);
+      } on AuthException catch (e) {
+        if (e.type == AuthErrorType.locked) {
+          _checkLockState();
+        } else {
+          String displayMessage = '';
+          switch (e.type) {
+            case AuthErrorType.accountNotExist:
+              displayMessage = AppStrings.accountNotExist;
+              break;
+            case AuthErrorType.wrongPassword:
+              displayMessage = AppStrings.loginFailed;
+              break;
+            default:
+              displayMessage = AppStrings.errorServer;
+          }
+          message.value = displayMessage;
+          Get.defaultDialog(
+            title: AppStrings.loginError,
+            middleText: message.value,
+            textConfirm: AppStrings.close,
+            confirmTextColor: Colors.white,
+            onConfirm: () => Get.back(),
+          );
+        }
+        taxCodeController.clear();
+        accountController.clear();
+        passwordController.clear();
+        update();
       } catch (e) {
-        message.value = e.toString();
+        message.value = AppStrings.errorServer;
         Get.defaultDialog(
           title: AppStrings.loginError,
           middleText: message.value,
@@ -74,11 +171,8 @@ class LoginController extends GetxController {
           confirmTextColor: Colors.white,
           onConfirm: () => Get.back(),
         );
-        taxCodeController.clear();
-        accountController.clear();
-        passwordController.clear();
         update();
-      }finally{
+      } finally {
         isLoading.value = false;
         message.value = '';
       }
