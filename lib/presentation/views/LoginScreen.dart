@@ -1,108 +1,23 @@
-import 'package:bt1/repo/UserRepo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hive/hive.dart';
+import 'package:get/get.dart';
 
-import '../core/values/AppStrings.dart';
-import '../models/UserModel.dart';
-import 'HomeScreen.dart';
+import '../../core/values/AppStrings.dart';
+import '../controller/login_controller.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends GetView<LoginController> {
   const LoginScreen({super.key});
 
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
   final String banner = 'assets/images/Frame 427324088.svg';
   final String icHeadphone = 'assets/images/headphone.svg';
   final String isSearch = 'assets/images/search-normal.svg';
   final String icSocial = 'assets/images/Social link.svg';
 
-  final Color textColor = Color(0xFF242E37);
-  final Color textHintColor = Color(0xFF5C6771);
-  final Color borderColor = Color(0xFFEBECED);
-  final Color focusedColor = Color(0xFFF24E1E);
+  final Color textColor = const Color(0xFF242E37);
+  final Color textHintColor = const Color(0xFF5C6771);
+  final Color borderColor = const Color(0xFFEBECED);
+  final Color focusedColor = const Color(0xFFF24E1E);
   final double fontSize = 16;
-
-  final TextEditingController taxCodeController = TextEditingController();
-  final TextEditingController accountController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-
-  final FocusNode taxCodeFocus = FocusNode();
-  final FocusNode accountFocus = FocusNode();
-  final FocusNode passwordFocus = FocusNode();
-
-  final UserRepo _userRepo = UserRepo();
-
-  bool isShowPass = false;
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    final currentUser = _userRepo.getUser();
-    if (currentUser != null) {
-      taxCodeController.text = currentUser.taxCode;
-      accountController.text = currentUser.account;
-      passwordController.text = currentUser.password;
-    }
-  }
-
-  @override
-  void dispose() {
-    taxCodeController.dispose();
-    accountController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  bool _isTextFieldChange(TextEditingController controller) {
-    return controller.text.isNotEmpty;
-  }
-
-  void _onClickSuffixIcon(TextEditingController controller, bool isPassword) {
-    if (isPassword) {
-      setState(() {
-        isShowPass = !isShowPass;
-      });
-    } else {
-      controller.clear();
-    }
-  }
-
-  void _onClickLoginButton() async {
-    final formState = _formKey.currentState;
-    if (formState != null && formState.validate()) {
-      formState.save();
-      final UserModel newUser = UserModel(
-        taxCode: taxCodeController.text,
-        account: accountController.text,
-        password: passwordController.text,
-        isLoginned: true,
-      );
-      final bool result = _userRepo.compareUser(newUser);
-      if (result) {
-        await _userRepo.addUser(newUser);
-        await Hive.box('settings').put('isFirstLogin', false);
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomeScreen(user: newUser)),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text(AppStrings.loginFailed)));
-        taxCodeController.clear();
-        accountController.clear();
-        passwordController.clear();
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,15 +41,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: size.height * 0.05),
-                        // Banner
                         _buildBanner(size),
                         const SizedBox(height: 30),
-                        // Form
-                        _buildForm(size),
+                        GetBuilder<LoginController>(
+                          builder: (ctrl) => _buildForm(size, ctrl, context),
+                        ),
                         const SizedBox(height: 40),
-                        // Button
-                        _buildButton(size),
-                        // Footer
+                        _buildButton(size, controller),
                         const SizedBox(height: 40),
                         const Spacer(),
                         _buildFooter(size),
@@ -158,56 +71,76 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildForm(Size size) {
+  Widget _buildForm(
+    Size size,
+    LoginController controller,
+    BuildContext context,
+  ) {
     return Form(
-      key: _formKey,
+      key: controller.formKey,
       child: Column(
         children: [
           _buildItemForm(
             label: AppStrings.taxCode,
             hintText: AppStrings.taxCode,
-            controller: taxCodeController,
+            textController: controller.taxCodeController,
             isPassword: false,
             isNumberKeyBoard: true,
             icon: Icons.cancel,
             validator: (value) {
-              if (value == null || value.length < 10) {
+              if (value == null || value.isEmpty) {
+                return AppStrings.taxCodeInvalid;
+              }
+              final RegExp regex = RegExp(
+                r'^(\d{10}|\d{12}|\d{13}|\d{14}|\d{10}-\d{3}|\d{10}-\d{4})$',
+              );
+              if (!regex.hasMatch(value)) {
                 return AppStrings.taxCodeInvalid;
               }
               return null;
             },
-            nextFocus: accountFocus,
-            currentFocus: taxCodeFocus,
+            nextFocus: controller.accountFocus,
+            currentFocus: controller.taxCodeFocus,
+            controller: controller,
+            context: context,
           ),
           const SizedBox(height: 10),
           _buildItemForm(
             label: AppStrings.account,
             hintText: AppStrings.account,
-            controller: accountController,
+            textController: controller.accountController,
             isPassword: false,
             isNumberKeyBoard: false,
             icon: Icons.cancel,
             validator: (value) {
               return null;
             },
-            nextFocus: passwordFocus,
-            currentFocus: accountFocus,
+            nextFocus: controller.passwordFocus,
+            currentFocus: controller.accountFocus,
+            controller: controller,
+            context: context,
           ),
           const SizedBox(height: 10),
-          _buildItemForm(
-            label: AppStrings.password,
-            hintText: AppStrings.password,
-            controller: passwordController,
-            isPassword: true,
-            isNumberKeyBoard: false,
-            icon: isShowPass ? Icons.visibility : Icons.visibility_off,
-            validator: (value) {
-              if (value == null || value.length < 6 || value.length > 50) {
-                return AppStrings.passwordInvalid;
-              }
-              return null;
-            },
-            currentFocus: passwordFocus,
+          Obx(
+            () => _buildItemForm(
+              label: AppStrings.password,
+              hintText: AppStrings.password,
+              textController: controller.passwordController,
+              isPassword: true,
+              isNumberKeyBoard: false,
+              icon: controller.isShowPass.value
+                  ? Icons.visibility
+                  : Icons.visibility_off,
+              validator: (value) {
+                if (value == null || value.length < 6 || value.length > 50) {
+                  return AppStrings.passwordInvalid;
+                }
+                return null;
+              },
+              currentFocus: controller.passwordFocus,
+              controller: controller,
+              context: context,
+            ),
           ),
         ],
       ),
@@ -217,13 +150,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildItemForm({
     required String label,
     required String hintText,
-    required TextEditingController controller,
+    required TextEditingController textController,
     required bool isPassword,
     required bool isNumberKeyBoard,
     required IconData icon,
     required String? Function(String?) validator,
     FocusNode? nextFocus,
     required FocusNode currentFocus,
+    required LoginController controller,
+    required BuildContext context,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,9 +174,9 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 10),
         FormField<String>(
           key: ValueKey(label),
-          initialValue: controller.text,
+          initialValue: textController.text,
           validator: (value) {
-            final currentVal = controller.text;
+            final currentVal = textController.text;
             if (currentVal.isEmpty) {
               return "${AppStrings.pleaseEnter}$label";
             }
@@ -257,13 +192,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   onSubmitted: (_) {
                     nextFocus != null
                         ? FocusScope.of(context).requestFocus(nextFocus)
-                        : _onClickLoginButton();
+                        : controller.handleLogin();
                   },
                   keyboardType: isNumberKeyBoard
                       ? TextInputType.number
                       : TextInputType.text,
-                  controller: controller,
-                  obscureText: isPassword ? !isShowPass : false,
+                  controller: textController,
+                  obscureText: isPassword
+                      ? !controller.isShowPass.value
+                      : false,
                   cursorColor: focusedColor,
                   showCursor: true,
                   decoration: InputDecoration(
@@ -284,10 +221,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 2,
                       ),
                     ),
-                    suffixIcon: _isTextFieldChange(controller)
+                    suffixIcon: controller.isTextFieldChange(textController)
                         ? GestureDetector(
                             onTap: () {
-                              _onClickSuffixIcon(controller, isPassword);
+                              controller.onClickSuffixIcon(
+                                textController,
+                                isPassword,
+                              );
                               state.didChange("");
                               if (state.hasError) {
                                 state.validate();
@@ -311,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (state.hasError) {
                       state.validate();
                     }
-                    setState(() {});
+                    controller.update();
                   },
                 ),
                 Visibility(
@@ -341,9 +281,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildButton(Size size) {
+  Widget _buildButton(Size size, LoginController controller) {
     return GestureDetector(
-      onTap: () => _onClickLoginButton(),
+      onTap: () => controller.handleLogin(),
       child: Container(
         width: size.width,
         height: size.height * 0.06,
@@ -351,14 +291,25 @@ class _LoginScreenState extends State<LoginScreen> {
           color: focusedColor,
           borderRadius: BorderRadius.circular(6),
         ),
-        child: Center(
-          child: Text(
-            AppStrings.login,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: fontSize,
-              fontWeight: FontWeight.w500,
-            ),
+        child: Obx(
+          () => Center(
+            child: controller.isLoading.value
+                ? SizedBox(
+                    width: size.width * 0.08,
+                    height: size.width * 0.08,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 5,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    AppStrings.login,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -382,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required String title,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(6),
@@ -392,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: Colors.grey.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 4,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),

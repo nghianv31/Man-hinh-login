@@ -15,4 +15,15 @@ class AppStrings {
   // Home Screen
   static const String home = "Home";
   static const String logout = "Đăng xuất";
+  static const String confirmLogout = "Bạn có chắc chắn muốn đăng xuất?";
+  static const String noUserData = "Không có dữ liệu người dùng";
+  static const String notUpdated = "Chưa cập nhật";
+
+  // Dialogs & Messages
+  static const String error = "Lỗi";
+  static const String loginError = "Lỗi đăng nhập";
+  static const String close = "Đóng";
+  static const String cancel = "Hủy";
+  static const String ok = "OK";
+  static const String accountNotExist = "Tài khoản không tồn tại";
 }

@@ -1,31 +1,57 @@
-import 'package:hive_flutter/hive_flutter.dart';
+
+import 'package:bt1/data/remote/firebase_firestore.dart';
 import 'package:bt1/models/UserModel.dart';
 
-class UserRepo {
-  // Singleton instance
-  static final UserRepo _instance = UserRepo._internal();
-  factory UserRepo() => _instance;
-  UserRepo._internal();
+import '../data/local/user_box.dart';
+import '../../core/values/AppStrings.dart';
 
-  final Box<UserModel> _box = Hive.box<UserModel>('users');
+abstract class BaseUserRepo {
+  Future<UserModel> getCurrentUser();
+}
 
-  static final UserModel user1 = UserModel(
-    taxCode: '1111111111',
-    account: 'demo',
-    password: '123456',
-  );
+class UserRepo implements BaseUserRepo {
+  final _userBox = UserBox();
+  final _firebaseRemote = FirebaseRemote();
 
-  Future<void> addUser(UserModel user) async {
-    await _box.put('currentUser', user);
+  @override
+  Future<UserModel> getCurrentUser() async {
+    try {
+      final user = _userBox.getCurrentUser();
+      if (user == null) {
+        throw Exception(AppStrings.accountNotExist);
+      }
+      return user;
+    } catch (e) {
+      throw Exception(e.toString());  
+    }
   }
 
-  UserModel? getUser() {
-    return _box.get('currentUser');
+  Future<List<UserModel>?> getListUserFromRemote() async {
+    try {
+      // get from remote
+      final listData = await _firebaseRemote.getCollectionWithCondition(
+        collection: 'accounts',
+        field: 'enabled',
+        value: true,
+      );
+      final List<UserModel> listUser = listData
+          .map((e) => UserModel.fromJson(e))
+          .toList();
+      // save in local
+      for (var element in listUser) {
+        await _userBox.addUsers(element);
+      }
+      return listUser;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 
-  bool compareUser(UserModel user) {
-    return user.taxCode == user1.taxCode &&
-        user.account == user1.account &&
-        user.password == user1.password;
+  Future<List<UserModel>?> getListUserFromLocal() async {
+    try {
+      return _userBox.getUsers();
+    } catch (e) {
+      throw Exception(e.toString());
+    }
   }
 }

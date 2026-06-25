@@ -1,12 +1,13 @@
 import 'package:bt1/firebase_options.dart';
-import 'package:bt1/repo/UserRepo.dart';
+import 'package:bt1/repo/AuthRepo.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/routes/app_pages.dart';
+import 'core/routes/app_routes.dart';
 import 'models/UserModel.dart';
-import 'view/HomeScreen.dart';
-import 'view/LoginScreen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:get/get.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,19 +19,25 @@ void main() async {
   Hive.registerAdapter(UserModelAdapter());
   
   await Hive.openBox<UserModel>('users');
+  await Hive.openBox('currentUser');
   await Hive.openBox('settings');
-  runApp(const MyApp());
+  
+  // Check login session
+  final bool isLoggedIn = await AuthRepo().checkLogin();
+  final String initialRoute = isLoggedIn ? AppRoutes.home : AppRoutes.login;
+
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  final UserRepo _userRepo = UserRepo();
   late bool isFirstRun;
   UserModel? currentUser;
 
@@ -39,21 +46,19 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     isFirstRun = Hive.box('settings').get('isFirstLogin', defaultValue: true);
     if (!isFirstRun) {
-      currentUser = _userRepo.getUser();
+      // currentUser = _userRepo.getUser();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = currentUser;
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF24E1E)),
       ),
-      home: (isFirstRun || user == null)
-          ? const LoginScreen()
-          : HomeScreen(user: user),
+      initialRoute: widget.initialRoute,
+      getPages: AppPages.routes,
     );
   }
 }
