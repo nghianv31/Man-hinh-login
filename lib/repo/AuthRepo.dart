@@ -6,6 +6,7 @@ import 'package:bt1/models/UserModel.dart';
 import 'package:bt1/models/session_login.dart';
 import 'package:bt1/utils/hash_password.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../core/exceptions/auth_exception.dart';
 
 import '../data/local/user_box.dart';
@@ -15,12 +16,18 @@ abstract class BaseAuthRepo {
   Future<bool> checkLogin();
   Future<void> login(String taxCode, String account, String password);
   Future<void> logout();
+  Future<bool>biometricAuth();
 }
+
+
+
 
 class AuthRepo implements BaseAuthRepo {
   final _userBox = UserBox();
   final _userRepo = UserRepo();
   final _initSecureStorage = InitSecureStorage();
+  final LocalAuthentication auth = LocalAuthentication();
+
 
   @override
   Future<void> login(String taxCode, String account, String password) async {
@@ -145,6 +152,19 @@ class AuthRepo implements BaseAuthRepo {
       throw AuthException(AuthErrorType.locked);
     } else {
       throw AuthException(errorType);
+    }
+  }
+  
+  @override
+  Future<bool> biometricAuth()async {
+    try {
+      return await auth.authenticate(
+        localizedReason: 'Xác thực để tiếp tục',
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
+      );
+    } catch (_) {
+      return false;
     }
   }
 }

@@ -4,7 +4,9 @@ import 'package:bt1/data/local/setting_box.dart';
 import 'package:bt1/repo/AuthRepo.dart';
 import 'package:bt1/repo/UserRepo.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../core/values/AppStrings.dart';
 import '../../core/exceptions/auth_exception.dart';
 import '../views/widgets/lock_dialog_widget.dart';
@@ -41,11 +43,25 @@ class LoginController extends GetxController
   void onInit() {
     super.onInit();
     shakeController = AnimationController(vsync: this);
+    getBiometric();
+  }
+
+  void getBiometric() async {
+    final auth = LocalAuthentication();
+    try {
+      
+      print(await auth.canCheckBiometrics);
+      print(await auth.isDeviceSupported());
+      print(await auth.getAvailableBiometrics());
+    } catch (e) {
+      debugPrint("Lỗi lấy thông tin sinh trắc học: $e");
+    }
   }
 
   @override
   void onReady() {
     super.onReady();
+    getBiometric();
     _checkLockState();
   }
 
@@ -181,5 +197,7 @@ class LoginController extends GetxController
     } else {
       shakeController.forward(from: 0.0);
     }
+
+    TextInput.finishAutofillContext();
   }
 }

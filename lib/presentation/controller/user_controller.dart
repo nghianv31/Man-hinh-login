@@ -2,6 +2,7 @@ import 'package:bt1/models/UserModel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/theme/theme.dart';
 import '../../repo/UserRepo.dart';
 import '../../repo/AuthRepo.dart';
 import '../../core/routes/app_routes.dart';
@@ -33,6 +34,7 @@ class UserController extends GetxController {
         middleText: message.value,
         textConfirm: AppStrings.close,
         confirmTextColor: Colors.white,
+        buttonColor: AppTheme.primaryColor,
         onConfirm: () => Get.back(),
       );
     } finally {
