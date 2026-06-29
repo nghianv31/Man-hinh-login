@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:bt1/core/routes/app_routes.dart';
 import 'package:bt1/data/local/setting_box.dart';
 import 'package:bt1/repo/AuthRepo.dart';
@@ -50,9 +51,9 @@ class LoginController extends GetxController
     final auth = LocalAuthentication();
     try {
       
-      print(await auth.canCheckBiometrics);
-      print(await auth.isDeviceSupported());
-      print(await auth.getAvailableBiometrics());
+      log((await auth.canCheckBiometrics).toString());
+      log((await auth.isDeviceSupported()).toString());
+      log((await auth.getAvailableBiometrics()).toString());
     } catch (e) {
       debugPrint("Lỗi lấy thông tin sinh trắc học: $e");
     }
